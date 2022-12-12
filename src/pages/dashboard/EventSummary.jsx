@@ -1,139 +1,234 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CiLocationOn, CiCalendar } from "react-icons/ci";
 import { CgMenuLeftAlt } from "react-icons/cg";
-import { AiOutlineLike, AiOutlineDislike, AiOutlineUser } from "react-icons/ai";
+import { AiOutlineCloseCircle, AiOutlineUser } from "react-icons/ai";
 import { BsPlus } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import CreateEventNavbar from "../../components/CreateEvent/CreateEventNavbar";
+import EventSummaryModal from "../../components/EventSummaryModal";
+import userServices from "../../services/userServices";
 
 const EventSummary = () => {
-  const [email, setEmail] = useState("");
-  const [participant, setParticipant] = useState([
-    {
-      email: "Damijoshua@gmail.com",
-      value: "Yes",
-    },
-    {
-      email: "SarahM32492@gmail.com",
-      value: "No",
-    },
-    {
-      email: "FaithBala2@gmail.com",
-      value: "No",
-    },
-  ]);
-  const addParticipant = (email) => {
-    const newParticipant = [...participant, { email, value: "Yes" }];
-    setParticipant(newParticipant);
-  };
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!email) return;
-    addParticipant(email);
-    setEmail("")
-  };
-  return (
-    <div>
-      <CreateEventNavbar />
-      <div className="mt-2 md:mx-14 mx-5 my-10">
-        <h2 className="mt-10 text-3xl font-bold">Event Summary</h2>
-        <div className="mt-4 border w-full p-5 rounded-lg shadow text-[#59595B]">
-          <h5 className="text-2xl font-bold">Girls Monthly Trip</h5>
-          <div className="grid gap-y-3 mt-4">
-            <div className="flex items-center">
-              <CiLocationOn className="text-xl" />
-              <p className="text-base font-normal ml-2">
-                21 Tunji Street, Lagos
-              </p>
-            </div>
-            <div className="flex items-center">
-              <CiCalendar className="md:text-xl text-5xl" />
-              <p className="text-base font-normal ml-2">
-                12th November 2022 - 20th November 2022 9:30 - 11:30
-              </p>
-            </div>
-            <div className="flex items-center">
-              <CgMenuLeftAlt className="md:text-xl text-5xl" />
-              <p className="text-base font-normal ml-2">
-                Highly anticipated girls weekend. Time away with the girls. Fun,
-                frugal, no spend amazing Bring gifts, everyone.{" "}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-between my-5">
-          <p className="md:text-2xl text-xl font-bold">Availability</p>
-          <div className="flex">
-            <div
-              className="flex mr-4 items-center"
-            >
-              <AiOutlineLike className="text-2xl text-[#006600]" />
-              <p className="text-xs ml-1.5">Yes</p>
-            </div>
-            <div
-              className="flex items-center"
-            >
-              <AiOutlineDislike className="text-2xl text-[#CC0000]" />
-              <p className="text-xs ml-1.5">No</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex md:justify-start justify-between my-5">
-          <p className="text-lg font-bold md:mr-7">Participant(3)</p>
-          <button className="bg-transparent flex items-center text-[#0056D6]">
-            <p className="mr-2 md:text-base text-sm">Add participant</p>
-            <BsPlus />
-          </button>
-        </div>
-        <div className="w-full my-5 bg-[#E7F0FF] flex justify-betweenn py-2 md:px-3 px-1">
-          <input
-            type="email"
-            placeholder="Add a participant email"
-            className="outline-none border-none h-full bg-transparent py-3 md:px-4 px-2 w-11/12 text-[#7A6F6F] md:text-base text-sm md:placeholder:text-base placeholder:text-sm"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <button
-            className="bg-[#0056D6] md:px-12 md:py-4 py-2.5 px-5 text-white rounded-lg"
-            onClick={handleSubmit}
-          >
-            Done
-          </button>
-        </div>
-        <div className="my-12">
-          {participant.map((invite, index) => (
-            <div className="flex justify-between mb-4" key={index}>
-              <div className="flex text-[#59595B] items-center">
-                <AiOutlineUser className="text-xl" />
-                <p className="font-normal md:text-base text-sm md:ml-3 ml-2">
-                  {invite.email}
-                </p>
-              </div>
-              <div className="flex items-center md:mr-8">
-                <p className="text-xs ml-1.5">{invite.value}</p>
-                {invite.value === "Yes" ? (
-                  <AiOutlineLike className="text-2xl text-[#006600]" />
-                ) : (
-                  <AiOutlineDislike className="text-2xl text-[#CC0000]" />
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="my-6 flex justify-between items-center">
-          <Link to="/dashboard/upcoming_events" className="text-xl font-semibold">
-            Back
-          </Link>
-          <Link to={'/create_event'} className="rounded flex md:px-6 px-4 py-2.5 bg-[#1070FF] text-white items-center">
-            <p className="md:text-xl text-base font-medium md:mr-2">
-              Send invite
-            </p>
-            <BsPlus className="text-xl" />
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+	const [email, setEmail] = useState("");
+	const [participants, setParticipants] = useState([]);
+    const [isSubmit, setIsSubmit] = useState(false);
+	const [formError, setFormError] = useState({});
+	const [validEmail, setValidEmail] = useState(false);
+	const [usedEmail, setUsedEmail] = useState(false);
+
+	const [popup, setPopup] = useState(false);
+	const [copied, setCopied] = useState(false);
+
+	const location = useLocation();
+	useEffect(() => {
+		if (popup) {
+			document.body.style.overflowY = "hidden";
+		} else if (!popup) {
+			document.body.style.overflowY = "scroll";
+		}
+	}, [popup]);
+
+	useEffect(() => {
+		participants.map((item) =>
+			item.email === email ? setUsedEmail(true) : setUsedEmail(false)
+		);
+		// eslint-disable-next-line
+	}, [email]);
+
+	useEffect(() => {
+		if (Object.keys(formError).length === 0) {
+			setValidEmail(true);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [formError]);
+
+	const validate = (values) => {
+		const regex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+		const errors = {};
+		if (!regex.test(values)) {
+			errors.email = "This is not a valid email format!";
+			setValidEmail(false);
+		} else {
+			setValidEmail(true);
+		  }
+		return errors;
+	};
+
+	useEffect(() => {
+    participants?.map((item) => item === email && setUsedEmail(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [email]);
+
+	const handleChange = (e) => {
+		setEmail(e.target.value);
+		setFormError(validate(email));
+	};
+
+	const addParticipant = (e) => {
+		e.preventDefault();
+
+		if (validEmail) {
+			setParticipants([...participants, email]);
+		}
+		setEmail("");
+		setValidEmail(false);
+	};
+
+	const saveValidEmail = async () => {
+		setIsSubmit(true);
+		const invitees = {
+			email_list: participants,
+			event_id: location.state.event._id,
+		};
+
+		const result = await userServices.sendInvite(invitees);
+		if (result.status === "fail") {
+			setIsSubmit(false);
+		}
+
+		if (result.status === "success") {
+			setIsSubmit(false)
+			setPopup(true)
+			setParticipants([]);
+			setEmail("");
+		}
+	};
+
+
+	const copyLink = () => {
+		setCopied(true);
+		navigator.clipboard.writeText(
+			`https://catchup.hng.tech/invitee/${location.state.event._id}`
+		);
+		setTimeout(() => {
+			setCopied(false);
+		}, 3000);
+	};
+
+	const deleteParticipant = (index) => {
+		const deletefromList = participants;
+		deletefromList.splice(index, 1);
+		setParticipants([...deletefromList]);
+	};
+
+
+	return (
+	  <>
+		<div>
+			<CreateEventNavbar />
+			<div className='mt-[100px] md:mx-14 mx-5 my-10'>
+				<h2 className='mt-10 text-3xl font-bold'>Event Summary</h2>
+				<div className='mt-4 border w-full p-5 rounded-lg shadow text-[#59595B]'>
+					<h5 className='text-2xl font-bold'>{location.state.event_event_title}</h5>
+					<div className='grid gap-y-3 mt-4'>
+						<div className='flex items-center'>
+							<CiLocationOn className='text-xl' />
+							<p className='text-base font-normal ml-2'>
+								{location.state.event.location}
+							</p>
+						</div>
+						<div className='flex items-center'>
+							<CiCalendar className='text-xl' />
+							<p className='text-base font-normal ml-2'>
+								{location.state.event.host_prefered_time}
+							</p>
+						</div>
+						<div className='flex items-center'>
+							<CgMenuLeftAlt className='text-xl' />
+							<p className='text-base font-normal ml-2'>
+								{location.state.event.event_description}
+							</p>
+						</div>
+					</div>
+				</div>
+				<div className='flex md:justify-start justify-between my-5'>
+					<p className='text-lg font-bold md:mr-7'>
+						Participants({participants.length})
+					</p>
+				</div>
+				<form onSubmit={ addParticipant }>
+				    <div className='w-full mt-5 bg-[#E7F0FF] flex justify-between py-2 md:px-3 px-1'>
+					    <input
+							type='email'
+							placeholder='Add a participant email'
+							className='outline-none border-none h-full bg-transparent py-3 md:px-4 px-2 w-11/12 text-[#7A6F6F] md:text-base text-sm md:placeholder:text-base placeholder:text-sm'
+							value={email}
+							required
+							onChange={handleChange}
+							aria-invalid={validEmail ? "false" : "true"}
+							aria-describedby='emailconfirm' // matches the error paragraph id
+					    />
+					     {validEmail && !usedEmail ? (
+						   <button
+						    type="submit"
+							className='bg-[#0056D6] md:px-12 md:py-4 py-2.5 px-5 text-white rounded-lg'
+							>
+							Add
+						  </button>
+					    ) : (
+						<button
+							disabled
+							type="submit"
+							className='bg-[#0056D6] md:px-12 md:py-4 py-2.5 px-5 text-white rounded-lg'>
+							Add
+						</button>
+					   )}
+				   </div>
+					<small className='text-red-500'>{formError.email}</small>
+					{participants?.map(
+						(item) =>
+							item === email && (
+								<small className='text-red-500'>
+									This participant has already been added
+								</small>
+							)
+					)}
+				</form>
+				<div className='my-12'>
+					{participants.map((participant, index) => (
+						<div className='flex justify-between mb-4' key={index}>
+							<div className='flex text-[#59595B] items-center'>
+								<AiOutlineUser className='text-xl' />
+								<p className='font-normal md:text-base text-sm md:ml-3 ml-2'>
+									{participant}
+								</p>
+							</div>
+							<div className='flex items-center md:mr-8'>
+								<button
+									onClick={() => deleteParticipant(index)}
+									className='cursor'>
+									<AiOutlineCloseCircle />
+								</button>
+							</div>
+						</div>
+					))}
+				</div>
+
+				<div className='my-6 flex justify-between items-center'>
+					<Link
+						to='/dashboard/upcoming_events'
+						className='text-xl font-semibold'>
+						Back
+					</Link>
+					<button
+						 onClick={saveValidEmail}
+						className='rounded flex md:px-6 px-4 py-2.5 bg-[#0056D6] text-white items-center cursor-pointer'>
+						<p className='md:text-xl text-base font-medium md:mr-2'>
+						{isSubmit  ? (
+							<span>Loading...</span>
+						) : (
+							<span>Send Invite</span>
+						)
+						}
+						</p>
+						<BsPlus className='text-xl' />
+					</button>
+				</div>
+			</div>
+		</div>
+		{popup && <EventSummaryModal setPopup={setPopup} copyLink={copyLink} copied={copied}/>}
+		</>
+	);
 };
 
 export default EventSummary;

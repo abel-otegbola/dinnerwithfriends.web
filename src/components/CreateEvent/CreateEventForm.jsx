@@ -8,15 +8,28 @@ import userServices from "../../services/userServices";
 import Button from "../Button";
 import SingleCalendar from "../SingleCalendar/SingleCalendar";
 import dateTimeForCalender from "../../helpers/DateTimeConverter";
+
 const CreateEventForm = () => {
 	const [showCalendar, setShowCalendar] = useState(false);
 	const [showCalendar2, setShowCalendar2] = useState(false);
 	const [showCalendar3, setShowCalendar3] = useState(false);
-	const { startDate, endDate, preferredDate, setFormValues, formValues } =
-		CatchUpEventContextUse();
+	const {
+		startDate,
+		setStartDate,
+		endDate,
+		setEndDate,
+		preferredDate,
+		setPreferredDate,
+		setFormValues,
+		formValues,
+	} = CatchUpEventContextUse();
 
 	const [minimumDate, setMinimumDate] = useState("");
 	const [maximumDate, setMaximumDate] = useState("");
+
+	const [isSubmit, setIsSubmit] = useState(false);
+	const [isSuccess, setIsSuccess] = useState(false);
+	const [isFailure, setIsFailure] = useState(false);
 
 	useEffect(() => {
 		const start = dateTimeForCalender(startDate, "00:00");
@@ -25,7 +38,6 @@ const CreateEventForm = () => {
 		setMaximumDate(end);
 	}, [startDate, endDate]);
 
-	console.log(minimumDate, maximumDate);
 	const navigate = useNavigate();
 
 	const [errors, setErrors] = useState({
@@ -41,20 +53,35 @@ const CreateEventForm = () => {
 
 	const handleSubmit = () => {
 		setErrors(formLogic(formValues));
-		setFormValues({
-			...formValues,
-			host_prefered_time: preferredDate,
-			end_date: endDate,
-			start_date: startDate,
-		});
 	};
 
 	const submitForm = async (data) => {
+		setIsSubmit(true);
 		const result = await userServices.createEvents(data);
+		if (result.status === "fail") {
+			setIsSubmit(false);
+			setIsFailure(true);
+		}
+
 		if (result.status === "success") {
-			navigate("/event_summary");
+			setIsSuccess(true);
+			setTimeout(() => {
+        setFormValues({
+          ...formValues,
+          event_title: "",
+          event_description: "",
+          location: "",
+          event_type: "",
+          participant_number: "",
+        });
+        setStartDate('')
+        setEndDate('')
+        setPreferredDate('')
+				navigate("/event_summary", { state: result.data });
+			}, 1000);
 		}
 	};
+
 	useEffect(() => {
 		if (Object.keys(errors).length === 0) {
 			submitForm(formValues);
@@ -62,8 +89,18 @@ const CreateEventForm = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [errors, navigate]);
 
+	useEffect(() => {
+		setFormValues({
+			...formValues,
+			host_prefered_time: preferredDate,
+			end_date: endDate,
+			start_date: startDate,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [preferredDate, endDate, startDate]);
+
 	return (
-		<div className='w-full py-8'>
+		<div className='w-full py-8 pt-[6rem] lg:pt-[7rem]'>
 			<h1 className='text-xl font-bold text-center'>Create Catchup Event</h1>
 			<div className='mt-6'>
 				<div className='flex flex-col mb-4'>
@@ -79,7 +116,7 @@ const CreateEventForm = () => {
 							setFormValues({ ...formValues, event_title: e.target.value })
 						}
 						placeholder='Time out with friends'
-						className='p-3 bg-white border border-[#0000004D] text-[#151517] placeholder:text-[#B6B6B6] rounded-[4px] text-sm mt-3 outline-none'
+						className='p-3 bg-white border border-[#0000004D] text-[#151517] rounded-[4px] text-sm mt-3 outline-none'
 					/>
 					<small className='text-red-600 text-[10px] mt-2'>
 						{errors?.event_title}
@@ -100,7 +137,7 @@ const CreateEventForm = () => {
 							})
 						}
 						placeholder='This Event should be a wonderful hangout. I will want everyone to be available for this event. Let me know when you will be free from the link I will send to you.'
-						className='p-3 bg-white border border-[#0000004D] text-[#151517] placeholder:text-[#B6B6B6]  rounded-[4px] text-sm mt-3 outline-none h-[120px]'
+						className='p-3 bg-white border border-[#0000004D] text-[#151517]  rounded-[4px] text-sm mt-3 outline-none h-[120px]'
 					/>
 					<small className='text-red-600 text-[10px] mt-2'>
 						{errors?.event_description}{" "}
@@ -120,7 +157,7 @@ const CreateEventForm = () => {
 						pattern='[A-Za-z][A-Za-z ]{2,30}$'
 						type='text'
 						placeholder='Sheraton Hotels'
-						className='p-3 bg-white border border-[#0000004D] text-[#151517] placeholder:text-[#B6B6B6] rounded-[4px] text-sm mt-3 outline-none'
+						className='p-3 bg-white border border-[#0000004D] text-[#151517] rounded-[4px] text-sm mt-3 outline-none'
 					/>
 					<small className='text-red-600 text-[10px] mt-2'>
 						{errors?.location}
@@ -139,7 +176,7 @@ const CreateEventForm = () => {
 						id='eventType'
 						type='text'
 						placeholder='Dinner'
-						className='p-3 bg-white border border-[#0000004D] text-[#151517] placeholder:text-[#B6B6B6] rounded-[4px] text-sm mt-3 outline-none'
+						className='p-3 bg-white border border-[#0000004D] text-[#151517] rounded-[4px] text-sm mt-3 outline-none'
 					/>
 					<small className='text-red-600 text-[10px] mt-2'>
 						{errors?.event_type}{" "}
@@ -161,7 +198,7 @@ const CreateEventForm = () => {
 						}
 						type='number'
 						placeholder='5'
-						className='p-3 bg-white border border-[#0000004D] text-[#151517] placeholder:text-[#B6B6B6] rounded-[4px] text-sm mt-3 outline-none w-fit'
+						className='p-3 bg-white border border-[#0000004D] text-[#151517] rounded-[4px] text-sm mt-3 outline-none w-fit'
 					/>
 					<small className='text-red-600 text-[10px] mt-2'>
 						{errors?.participant_number}{" "}
@@ -180,7 +217,7 @@ const CreateEventForm = () => {
 								disabled
 								value={startDate}
 								placeholder='17/11/2022'
-								className='flex-[5] bg-transparent  text-[#151517] placeholder:text-[#B6B6B6]  text-sm outline-none'
+								className='flex-[5] bg-transparent  text-[#151517]  text-sm outline-none'
 							/>
 							<span
 								onClick={() => setShowCalendar(!showCalendar)}
@@ -216,7 +253,7 @@ const CreateEventForm = () => {
 								disabled
 								value={endDate}
 								placeholder='23/11/2022'
-								className='flex-[5] bg-transparent  text-[#151517] placeholder:text-[#B6B6B6]  text-sm outline-none'
+								className='flex-[5] bg-transparent  text-[#151517]  text-sm outline-none'
 							/>
 							<span
 								onClick={() => setShowCalendar2(!showCalendar2)}
@@ -254,7 +291,7 @@ const CreateEventForm = () => {
 							disabled
 							value={preferredDate}
 							placeholder='17/11/2022 - 3:00'
-							className='flex-[5] bg-transparent  text-[#151517] placeholder:text-[#B6B6B6]  text-sm outline-none'
+							className='flex-[5] bg-transparent  text-[#151517]  text-sm outline-none'
 						/>
 						<span
 							onClick={() => setShowCalendar3(!showCalendar3)}
@@ -287,8 +324,16 @@ const CreateEventForm = () => {
 						children
 						type='submit'
 						onClick={handleSubmit}
-						className='flex items-center text-xs font-medium px-6 py-2 bg-[#1070FF] w-fit text-white rounded-[4px]'>
-						<span>Next</span>
+						className='flex items-center text-xs font-medium px-10 py-2 bg-[#1070FF] w-fit text-white rounded-[4px]'>
+						{isSubmit ? (
+							<span>Loading...</span>
+						) : isFailure ? (
+							<span> Try Again </span>
+						) : isSuccess ? (
+							<span>Success</span>
+						) : (
+							<span>Next</span>
+						)}
 						<span className='text-[8px] ml-2'>
 							<SlArrowRight />
 						</span>

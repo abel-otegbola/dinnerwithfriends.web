@@ -1,28 +1,41 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import { MdOutlineArrowBack } from "react-icons/md";
-import { IoIosArrowDown } from "react-icons/io";
 import { BiEdit } from "react-icons/bi";
-import { AiOutlineCopyright } from "react-icons/ai";
 import avatar from "../../assets/img/Avatar.png";
 import Footer from "../../components/Footer";
-import Navbar from "../../components/Navbar";
 import SettingsFooter from "../../components/settingsPage/setFooter";
 import { Link } from "react-router-dom";
+import userServices from "../../services/userServices";
 
 import "./profilePage.css";
 import CreateEventNavbar from "../../components/CreateEvent/CreateEventNavbar";
 
-const profilePage = () => {
+const ProfilePage = () => {
+  const [user, setUser] = useState({
+
+		name: '',
+    email: '',
+    birthday:'' ,
+		gender: '',
+		mobile: '',
+	});
+
+  const fetchData = async() => {
+    const data = await userServices.getUser()
+
+    setUser(data)
+  }
+  useEffect(() => {
+
+    fetchData();
+  }, [])
   return (
     <div>
-      <div id="main_navbar">
-        <Navbar />
-      </div>
       <CreateEventNavbar />
 
       <div className="settings_body">
         <div className="body_title_container">
-          <Link to="/">
+          <Link to="/dashboard/upcoming_events">
             <div className="body_title">
               <MdOutlineArrowBack />
               <h1>Account Settings</h1>
@@ -30,7 +43,9 @@ const profilePage = () => {
           </Link>
           <div className="body_subTitles">
             <h5>Profile</h5>
-            <span className="notification_tab">Notifications</span>
+            <Link to='/notification'>
+              <span className="notification_tab">Notifications</span>
+              </Link>
           </div>
         </div>
 
@@ -38,9 +53,9 @@ const profilePage = () => {
           <div className="avatar_fullName">
             <img src={avatar} alt="" className="avatar" />
             <div className="fullName">
-              <h1>Femi Odeyinka</h1>
+              <h1>{user?.name}</h1>
 
-              <span>femiodeyinka@examplemail.com</span>
+              <span>{user?.email}</span>
             </div>
           </div>
 
@@ -56,32 +71,32 @@ const profilePage = () => {
 
         <section className="more_user_details">
           <label>
-            Username/Nickname
-            <div className="field">Femi Femo</div>
+            Fullname
+            <div className="field">{user?.name}</div>
           </label>
 
           <label>
             Gender
-            <div className="field">Male</div>
+            <div className="field">{user?.gender}</div>
           </label>
 
           <label>
             Email
-            <div className="field">femiodeyinka@examplemail.com</div>
+            <div className="field">{user?.email}</div>
           </label>
 
           <label>
             Mobile
-            <div className="field">+234 801 234 5678</div>
+            <div className="field">{user?.mobile}</div>
           </label>
 
           <label>
             Birthday
-            <div className="field">25 June</div>
+            <div className="field">{user?.birthday}</div>
           </label>
         </section>
       </div>
-      <div className="settings-footer">
+      {/* <div className="settings-footer">
         <div className="footer_top">
           <span>
             <a href="/">Catch Up</a>
@@ -108,7 +123,7 @@ const profilePage = () => {
             <p>2022 Team PryBar</p>
           </div>
         </div>
-      </div>
+      </div> */}
       <SettingsFooter className="settings-footer" />
       <div id="main_footer">
         <Footer />
@@ -117,4 +132,4 @@ const profilePage = () => {
   );
 };
 
-export default profilePage;
+export default ProfilePage;

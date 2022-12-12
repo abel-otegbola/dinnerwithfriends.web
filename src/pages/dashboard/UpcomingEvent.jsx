@@ -8,32 +8,34 @@ import add from "../../assets/img/add.png";
 import Footer from "../../components/Footer";
 import { Link } from "react-router-dom";
 import CreateEventNavbar from "../../components/CreateEvent/CreateEventNavbar";
-
+import CalenderSyncModal from "../../components/CalenderSyncModal";
+/* global gapi */
 const UpcomingEvent = () => {
-	const [status, setStatus] = useState(false);
+	const [status, setStatus] = useState("not-decided");
 	const { events, setEvents } = CatchUpEventContextUse();
+	const [modal, setModal] = useState(false);
 
-	useEffect(() => {
-		async function fetchData() {
-			const data = await userServices.getAllEvents();
-			setEvents(data);
-      const eventsJson = JSON.stringify(data)
-      localStorage.setItem('eventsArr', eventsJson) 
-		}
-		fetchData();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+  useEffect(() => {
+    async function fetchData() {
+      const data = await userServices.getAllEvents();
+      setEvents(data);
+      const eventsJson = JSON.stringify(data);
+      localStorage.setItem("eventsArr", eventsJson);
+    }
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-	const filteredEvents =
-		events.length === 0
-			? events
-			: events.filter((event) => event.published === status);
+  const filteredEvents =
+    events.length === 0
+      ? events
+      : events.filter((event) => event.published === status);
 
 	const userEvents =
 		filteredEvents.length === 0 ? (
 			<Event
 				filteredEvents={filteredEvents}
-				status={status === false ? "upcoming" : "Rsvp"}
+				status={status === 'not-decided' ? "upcoming" : "Rsvp"}
 			/>
 		) : (
 			filteredEvents.map(
@@ -43,9 +45,11 @@ const UpcomingEvent = () => {
 					event_description,
 					final_event_date,
 					participant_number,
-				}) => (
+				}) => {
+
+					return (
 					<Event
-						status={status}
+					status={status}
 						key={_id}
 						id={_id}
 						event_title={event_title}
@@ -53,15 +57,74 @@ const UpcomingEvent = () => {
 						final_event_date={final_event_date}
 						participant_number={participant_number}
 						filteredEvents={filteredEvents}
-					/>
-				)
+					/>)
+				}
 			)
 		);
 
+  function authenticate() {
+    return gapi.auth2
+      .getAuthInstance()
+      .signIn({
+        scope:
+          "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.readonly",
+        plugin_name: "dinnerwithfriends",
+      })
+      .then(
+        function () {
+          console.log("Sign-in successful");
+        },
+        function (err) {
+          console.error("Error signing in", err);
+        }
+      );
+  }
+
+  function loadClient() {
+    gapi.client.setApiKey("AIzaSyA7G2ANAJI6rm_DpTW84lsKUJT-c8bmirI");
+    return gapi.client
+      .load("https://content.googleapis.com/discovery/v1/apis/calendar/v3/rest")
+      .then(
+        function () {
+          console.log("GAPI client loaded for API");
+          execute();
+        },
+        function (err) {
+          console.error("Error loading GAPI client for API", err);
+        }
+      );
+  }
+  // Make sure the client is loaded and sign-in is complete before calling this method.
+  function execute() {
+    return gapi.client.calendar.calendarList.list({}).then(
+      function (response) {
+        // Handle the results here (response.result has the parsed body).
+        console.log("Response", response);
+
+				if (response.status === 200) {
+					setModal(true);
+				}
+			},
+			function (err) {
+				console.error("Execute error", err);
+			}
+		);
+	}
+	gapi.load("client:auth2", function () {
+		gapi.auth2.init({
+			client_id:
+			"102076896830-4il8ncmrd6qfoippk2ut4uujb8cci54v.apps.googleusercontent.com",
+		});
+	});
+
+  const googleCalenderApi = async () => {
+    await authenticate().then(loadClient);
+  };
+
 	return (
 		<>
-			<CreateEventNavbar />
-			<section className='px-[22px] lg:px-20 pt-11 lg:pt-16 mb-16'>
+			<CreateEventNavbar setModal={setModal}/>
+			<section className='px-[22px] lg:px-20 pt-[6rem] lg:pt-[7rem] mb-16'>
 				<div className='flex flex-col lg:flex-row justify-center lg:justify-between gap-x-4 mb-4 lg:mb-8'>
 					<div className='flex flex-col justify-center items-center lg:justify-start lg:items-start gap-y-4'>
 						<h2 className='text-[#151517] text-2xl font-bold lg:text-[40px]'>
@@ -73,6 +136,7 @@ const UpcomingEvent = () => {
 					</div>
 					<Button
 						type='button'
+						onClick={googleCalenderApi}
 						className='hidden lg:flex justify-between items-center gap-x-3.5 rounded-lg border border-solid border-[#344054] px-4 outline-0'>
 						<div className='w-[28px] h-[28px]'>
 							<img src={calender} alt='google-calender' />
@@ -110,18 +174,18 @@ const UpcomingEvent = () => {
 						<li>
 							<Button
 								className={`${
-									status === false ? "pb-3 border-[#0056D6] border-b-4 " : ""
+									status === 'not-decided' ? "pb-3 border-[#0056D6] border-b-4 " : ""
 								}'pb-3 outline-0 border-0 text-[#717172] bg-inherit lg:text-lg'`}
-								onClick={() => setStatus(false)}>
+								onClick={() => setStatus('not-decided')}>
 								Upcoming Event
 							</Button>
 						</li>
 						<li>
 							<Button
 								className={`${
-									status === true ? "pb-3 border-[#0056D6] border-b-4 " : ""
+									status === 'decided' ? "pb-3 border-[#0056D6] border-b-4 " : ""
 								}' pb-3 outline-0 border-0 text-[#717172] bg-inherit lg:text-lg'`}
-								onClick={() => setStatus(true)}>
+								onClick={() => setStatus('decided')}>
 								Reserved Event
 							</Button>
 						</li>
@@ -131,7 +195,7 @@ const UpcomingEvent = () => {
 					className={`${
 						filteredEvents.length === 0 ? "pt-12" : "pt-[10px]"
 					} "flex flex-col justify-center items-center gap-y-8 lg:border border-solid border-[#CDCDCD] lg:pb-[200px] lg:px-[20px] max-h-[30rem] overflow-y-scroll "`}>
-					{status === false && (
+					{status === 'not-decided' && (
 						<div
 							className={`${
 								filteredEvents.length === 0
@@ -141,7 +205,7 @@ const UpcomingEvent = () => {
 							{userEvents}
 						</div>
 					)}
-					{status === true && (
+					{status === 'decided' && (
 						<div
 							className={`${
 								filteredEvents.length === 0
@@ -154,6 +218,7 @@ const UpcomingEvent = () => {
 				</div>
 			</section>
 			<Footer />
+			{modal && <CalenderSyncModal setModal={setModal} />}
 		</>
 	);
 };

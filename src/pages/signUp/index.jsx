@@ -1,37 +1,32 @@
-import React, {useState} from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { FiEye, FiEyeOff } from 'react-icons/fi'
-import { useForm } from "react-hook-form"
-import image from './signup_image.webp'
-import google from './google.svg'
-import Logo from '../../components/Logo'
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+import { useForm } from "react-hook-form";
+import image from "./signup_image.webp";
+import google from "./google.svg";
+import Logo from "../../components/Logo";
 
 const SignUp = () => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm()
-  const [existingUser, setExistingUser] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [accountCreated, setAccountCreated] = useState(false)
-  const nav = useNavigate()
-  const [passwordShown, setPasswordShown] = useState(false);
+	const {
+		register,
+		handleSubmit,
+		reset,
+		formState: { errors },
+	} = useForm();
+	const [existingUser, setExistingUser] = useState(false);
+	const [submitting, setSubmitting] = useState(false);
+	const [accountCreated, setAccountCreated] = useState(false);
+	const [passwordShown, setPasswordShown] = useState(false);
+	const navigate = useNavigate();
 
-  const togglePassword = () => {
-    setPasswordShown(!passwordShown);
-  };
+	const togglePassword = () => {
+		setPasswordShown(!passwordShown);
+	};
 
-	/*const googleSubmit = () => {
-    fetch('https://catchup.hng.tech/api/v1/auth/google/url')
-    .then(response => {
-      if (!response.ok) {
-          throw Error(response.status);
-      }
-      return response})
-    .then(result => console.log(result.text()))
-    .catch(err => {
-        console.log(err)
-        setSubmitting(false)
-    })
-
-  }*/
+	const googleSignUpAuth = () => {
+		const gLink = "https://api.catchup.hng.tech/api/v1/auth/google/auth";
+		navigate(gLink.slice(6));
+	};
 
 	const onSubmit = async (data) => {
 		reset();
@@ -49,7 +44,7 @@ const SignUp = () => {
 			}),
 		};
 
-		fetch("https://prybar.onrender.com/api/v1/auth/signup", options)
+		fetch("https://api.catchup.hng.tech/api/v1/auth/signup", options)
 			.then((response) => {
 				if (!response.ok) {
 					throw Error(response.status);
@@ -65,7 +60,7 @@ const SignUp = () => {
 					setAccountCreated(true);
 					localStorage.setItem("jwt-token", result.accessToken);
 					setTimeout(() => {
-						nav('/dashboard/upcoming_events');
+						navigate("/dashboard/upcoming_events");
 					}, 2000);
 				}
 			})
@@ -115,7 +110,7 @@ const SignUp = () => {
 						onSubmit={handleSubmit(onSubmit)}
 						className=' mt-7 text-[#4B4B4C] font-normal [&>input]:mt-2 [&>input]:w-full [&>input]:mb-3.5'>
 						<div className='relative w-full mb-4 '>
-							<label className='pb-0' htmlFor='email'>
+							<label className='pb-0' htmlFor='name'>
 								Name
 							</label>
 
@@ -127,9 +122,9 @@ const SignUp = () => {
 									!errors.name
 										? "shadow-[0px_0px_0px_4px_rgba(74,74,104,0.1)]"
 										: "shadow-[0px_0px_0px_4px_rgba(249,50,50,0.1)]"
-								}  mt-2 w-full h-11 p-3.5 rounded-lg`}
+								}  mt-2 w-full h-11 p-3.5 rounded-lg bg-transparent`}
 								type='text'
-								name='email'
+								name='name'
 								placeholder='Enter your name'
 								{...register("name", {
 									required: "Name cannot be empty",
@@ -171,7 +166,7 @@ const SignUp = () => {
 									!errors.email
 										? "shadow-[0px_0px_0px_4px_rgba(74,74,104,0.1)]"
 										: "shadow-[0px_0px_0px_4px_rgba(249,50,50,0.1)]"
-								}  mt-2 w-full h-11 p-3.5 rounded-lg`}
+								}  mt-2 w-full h-11 p-3.5 rounded-lg bg-transparent`}
 								type='email'
 								name='email'
 								placeholder='Enter your email'
@@ -195,38 +190,55 @@ const SignUp = () => {
 								Password
 							</label>
 
-              <input
-              style={{border: errors.password ? '1px solid red': '1px solid #D0D5DD'}}
-              className=
-                {`relative focus:outline-none ${!errors.password? 'focus:shadow-[0px_0px_0px_4px_rgba(74,74,104,0.1)]' : 'focus:shadow-[0px_0px_0px_4px_rgba(249,50,50,0.1)]'} mt-2 w-full h-11 p-3.5 rounded-lg`}
-              type={passwordShown ? "text" : "password"}
-              name="password"
-              placeholder="Please enter your unique password"
-              {...register("password",
-              {required: "Password cannot be empty",
-                minLength: {
-                  value: 9,
-                  message: "Password must be at least 9 characters"
-               },
-               maxLength: {
-                value: 30,
-                message: "Password must not be more than 30 characters"
-              },
-              pattern: {
-                value: secondPattern,
-                message: "Password has to start with a letter, can contain numbers. No spaces and special characters allowed"
-              }
-              })}/>
-              <span
-                className='absolute bottom-4 right-3 cursor-pointer'
-                onClick={togglePassword}>
-                  {passwordShown ?  <FiEyeOff /> : <FiEye />}
-              </span>
-              {errors.password && <p className='right-0 bottom-[-37px] italic text-sm mt-2' style={{color: 'red'}}>{errors.password?.message}</p>}
-            </div>
+							<input
+								style={{
+									border: errors.password
+										? "1px solid red"
+										: "1px solid #D0D5DD",
+								}}
+								className={`relative focus:outline-none ${
+									!errors.password
+										? "focus:shadow-[0px_0px_0px_4px_rgba(74,74,104,0.1)]"
+										: "focus:shadow-[0px_0px_0px_4px_rgba(249,50,50,0.1)]"
+								} mt-2 w-full h-11 p-3.5 rounded-lg bg-transparent`}
+								type={passwordShown ? "text" : "password"}
+								name='password'
+								placeholder='Please enter your unique password'
+								{...register("password", {
+									required: "Password cannot be empty",
+									minLength: {
+										value: 9,
+										message: "Password must be at least 9 characters",
+									},
+									maxLength: {
+										value: 30,
+										message: "Password must not be more than 30 characters",
+									},
+									pattern: {
+										value: secondPattern,
+										message:
+											"Password has to start with a letter, can contain numbers. No spaces and special characters allowed",
+									},
+								})}
+							/>
+							<span
+								className={`absolute ${
+									errors.password ? "bottom-11" : "bottom-3.5"
+								} right-3 cursor-pointer`}
+								onClick={togglePassword}>
+								{passwordShown ? <FiEyeOff /> : <FiEye />}
+							</span>
+							{errors.password && (
+								<p
+									className='right-0 bottom-[-37px] italic text-sm mt-2'
+									style={{ color: "red" }}>
+									{errors.password?.message}
+								</p>
+							)}
+						</div>
 
 						<button
-							className=' transition ease-in duration-200 hover:bg-[#0056D6] mt-4 text-white bg-[#0056D6] w-full h-11 rounded-lg'
+							className=' transition ease-in duration-200 hover:bg-blue-400 mt-4 text-white bg-[#0056D6] w-full h-11 rounded-lg'
 							type='submit'>
 							{submitting ? "Loading..." : "Create a free account"}
 						</button>
@@ -234,12 +246,12 @@ const SignUp = () => {
 
 					<p className='my-2.5 text-center text-[#0056D6]'>Or</p>
 
-					<a
-						href='https://catchup.hng.tech/api/v1/auth/google/url'
-						className='flex justify-center items-center font-medium text-[#344054] w-full  border border-[#D0D5DD] h-11 p-2 rounded-lg'>
+					<button
+						onClick={googleSignUpAuth}
+						className='cursor-pointer flex justify-center items-center font-medium text-[#344054] w-full  border border-[#D0D5DD] h-11 p-2 rounded-lg'>
 						<img className='mr-2 w-6' src={google} alt='google logo' />
 						Sign Up with Google
-					</a>
+					</button>
 
 					<Link to='/sign_in'>
 						{" "}

@@ -9,20 +9,14 @@ const SingleCalendar = ({ minDate, maxDate, setShowCalendar, showCalendar, id, a
 	const [time, setTime] = useState("7:00");
 
 	const {
-		formValues,
-		setFormValues,
-		startDate,
 		setStartDate,
-		endDate,
 		setEndDate,
-		preferredDate,
 		setPreferredDate,
 	} = CatchUpEventContextUse();
 
 	const setDT = () => {
 		const splitDate = dateValue.toLocaleDateString().split("/");
-		const date = `${splitDate[1]}/${splitDate[0]}/${splitDate[2]}`;
-
+		const date = `${splitDate[1].length === 1 ? `0${splitDate[1]}` : splitDate[1]}/${splitDate[0]}/${splitDate[2]}`;
 		if (id === "startDate") {
 			setStartDate(date);
 		}
@@ -32,12 +26,6 @@ const SingleCalendar = ({ minDate, maxDate, setShowCalendar, showCalendar, id, a
 		if (id === "preferredDate") {
 			setPreferredDate(`${date} - ${time}`);
 		}
-		setFormValues({
-			...formValues,
-			host_prefered_time: preferredDate,
-			end_date: endDate,
-			start_date: startDate,
-		});
 	};
 
 

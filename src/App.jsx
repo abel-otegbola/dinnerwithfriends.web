@@ -9,7 +9,7 @@ import SignIn from "./pages/signIn";
 import SignUp from "./pages/signUp";
 import ViewEvent from "./pages/dashboard/ViewEvent";
 import ContactUs from "./pages/contactUs";
-import ProfilePage from "./pages/settingsPage/profilePage";
+import ProfilePage from "./pages/settingsPage/ProfilePage";
 import ForgetPassword from "./pages/ForgetPassword/index";
 import ResetLink from "./pages/ForgetPassword/LinkReset";
 import ResetPassword from "./pages/ForgetPassword/ResetPassword";
@@ -19,8 +19,8 @@ import HowItWorks from "./pages/howItWorks/HowItWorks";
 import Terms from "./pages/t&c";
 import TermsOfUse from "./pages/termsOfUse";
 import Faq from "./pages/FAQ/Faq";
-import Settings from "./pages/settingsPage/profilePage";
-import AccountSettings from "./pages/settingsPage/profileTwo";
+import Settings from "./pages/settingsPage/ProfilePage";
+import AccountSettings from "./pages/settingsPage/UserProfile";
 import EventInviteResponse from "./pages/invitee/EventInviteResponse";
 import EventSummary from "./pages/dashboard/EventSummary";
 import UpcomingEvent from "./pages/dashboard/UpcomingEvent";
@@ -32,7 +32,11 @@ import HelpRoutes from "./pages/helpCenter/helpRoutes";
 import AboutUsPage from "./pages/aboutUs";
 import { googleCalender } from "./helpers/googleCalender";
 import EventInvite from "./pages/invitee/EventInvite";
+import Notification from "./pages/notifications/notification";
+import Verify from "./pages/verify";
+
 googleCalender();
+
 function App() {
   return (
     <div className="App">
@@ -41,8 +45,8 @@ function App() {
         <Route path="/create_event" element={<CreateEvent />} />
         <Route path="/closed_event" element={<ClosedEvent />} />
         <Route path="/update_details" element={<AccountSettings />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/invitee" element={<Invitee />} />
+       <Route path="/settings" element={<Settings />} />
+        <Route path="/invitee/:id" element={<Invitee />} />
         <Route path="/sign_in" element={<SignIn />} />
         <Route path="/sign_up" element={<SignUp />} />
         <Route path="/view_event/:id" element={<ViewEvent />} />
@@ -52,7 +56,7 @@ function App() {
         <Route path="/faq" element={<Faq />} />
         <Route path="/terms-of-use" element={<TermsOfUse />} />
         <Route path="/terms" element={<Terms />} />
-        <Route path="/event_invite/:eventId" element={<EventInvite />}/>
+        <Route path="/event_invite/:token" element={<EventInvite />} />
         <Route path="/event_summary" element={<EventSummary />} />
         <Route
           path="/event_invite/event_invite_response"
@@ -72,6 +76,8 @@ function App() {
         <Route path="/help/*" element={<HelpRoutes />} />
         <Route path="/aboutUs" element={<AboutUsPage />} />
         <Route path="*" element={<Error404 />} />
+        <Route path="/notification" element={<Notification />} />
+        <Route path="/verify" element={<Verify />} />
       </Routes>
     </div>
   );
